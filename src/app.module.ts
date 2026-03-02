@@ -11,6 +11,8 @@ import { LlmConfigsModule } from './llm-configs/llm-configs.module';
 import { EnvironmentsModule } from './environments/environments.module';
 import { TestSuitesModule } from './test-suites/test-suites.module';
 import { TestCasesModule } from './test-cases/test-cases.module';
+import { TestRunsModule } from './test-runs/test-runs.module';
+import { TestResultsModule } from './test-results/test-results.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { TestCasesModule } from './test-cases/test-cases.module';
     EnvironmentsModule,
     TestSuitesModule,
     TestCasesModule,
+    TestRunsModule,
+    TestResultsModule,
   ],
 })
 export class AppModule {}
