@@ -10,6 +10,7 @@ import { UsersModule } from './users/users.module';
 import { LlmConfigsModule } from './llm-configs/llm-configs.module';
 import { EnvironmentsModule } from './environments/environments.module';
 import { TestSuitesModule } from './test-suites/test-suites.module';
+import { TestCasesModule } from './test-cases/test-cases.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { TestSuitesModule } from './test-suites/test-suites.module';
     LlmConfigsModule,
     EnvironmentsModule,
     TestSuitesModule,
+    TestCasesModule,
   ],
 })
 export class AppModule {}
