@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+
+# Environment — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Prisma
+# Keep schema.prisma and migrations committed; ignore generated client if desired
+# prisma/generated/
+
+# Storage (Playwright screenshots, videos)
+storage/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jest coverage
+coverage/
+
+# Claude
+.claude/
+.claude_cache/

@@ -1,0 +1,302 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum LLMProvider {
+  OPENAI
+  ANTHROPIC
+  GEMINI
+  OLLAMA
+  CUSTOM
+}
+
+enum TestRunStatus {
+  PENDING
+  RUNNING
+  PASSED
+  FAILED
+  PARTIAL
+  CANCELLED
+  ERROR
+}
+
+enum TestResultStatus {
+  PASSED
+  FAILED
+  SKIPPED
+  ERROR
+}
+
+enum StepAction {
+  GOTO
+  CLICK
+  FILL
+  SELECT
+  WAIT
+  WAIT_FOR_SELECTOR
+  EXPECT
+  SCREENSHOT
+  HOVER
+  PRESS_KEY
+  SCROLL
+}
+
+enum AssertionType {
+  VISIBLE
+  HIDDEN
+  CONTAINS_TEXT
+  EQUALS_TEXT
+  URL_CONTAINS
+  URL_EQUALS
+  COUNT
+  ATTRIBUTE_EQUALS
+  CHECKED
+  ENABLED
+  DISABLED
+}
+
+enum NotificationEvent {
+  RUN_STARTED
+  RUN_PASSED
+  RUN_FAILED
+  RUN_PARTIAL
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  RUN
+  LOGIN
+  LOGOUT
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  password     String
+  role         UserRole  @default(USER)
+  refreshToken String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  llmConfigs    LLMConfig[]
+  testSuites    TestSuite[]
+  testRuns      TestRun[]
+  apiKeys       ApiKey[]
+  auditLogs     AuditLog[]
+  notifications NotificationConfig[]
+
+  @@map("users")
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  key       String    @unique
+  lastUsed  DateTime?
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("api_keys")
+}
+
+model LLMConfig {
+  id          String      @id @default(cuid())
+  userId      String
+  name        String
+  provider    LLMProvider
+  model       String
+  apiKeyEnc   String // AES-256 encrypted
+  baseUrl     String? // for OLLAMA or CUSTOM
+  temperature Float       @default(0.2)
+  maxTokens   Int         @default(2048)
+  tokenBudget Int? // max tokens allowed per run
+  totalTokens Int         @default(0) // cumulative usage
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+
+  user        User         @relation(fields: [userId], references: [id])
+  testCases   TestCase[]
+  testResults TestResult[]
+
+  @@map("llm_configs")
+}
+
+model Environment {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String // e.g. "Local", "Staging", "Production"
+  baseUrl   String
+  variables Json      @default("{}") // key-value pairs
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  testRuns TestRun[]
+
+  @@map("environments")
+}
+
+model TestSuite {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  tags        String[]
+  stopOnFail  Boolean   @default(false)
+  dependsOnId String? // suite dependency
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  user       User        @relation(fields: [userId], references: [id])
+  dependsOn  TestSuite?  @relation("SuiteDependency", fields: [dependsOnId], references: [id])
+  dependents TestSuite[] @relation("SuiteDependency")
+  testCases  TestCase[]
+  testRuns   TestRun[]
+  schedules  Schedule[]
+
+  @@map("test_suites")
+}
+
+model TestCase {
+  id                 String    @id @default(cuid())
+  suiteId            String
+  llmConfigId        String?
+  name               String
+  description        String?
+  tags               String[]
+  steps              Json // Step[] — see Step type
+  variables          Json      @default("{}") // local variable overrides
+  order              Int       @default(0)
+  captureScreenshots Boolean   @default(true)
+  captureVideo       Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  suite       TestSuite    @relation(fields: [suiteId], references: [id])
+  llmConfig   LLMConfig?   @relation(fields: [llmConfigId], references: [id])
+  testResults TestResult[]
+
+  @@map("test_cases")
+}
+
+model TestRun {
+  id                    String        @id @default(cuid())
+  userId                String
+  suiteId               String?
+  testCaseId            String? // null if running full suite
+  environmentId         String?
+  status                TestRunStatus @default(PENDING)
+  failedOnly            Boolean       @default(false) // re-run failed only
+  totalCases            Int           @default(0)
+  passedCases           Int           @default(0)
+  failedCases           Int           @default(0)
+  skippedCases          Int           @default(0)
+  totalPromptTokens     Int           @default(0)
+  totalCompletionTokens Int           @default(0)
+  totalTokensUsed       Int           @default(0)
+  estimatedCost         Float         @default(0)
+  startedAt             DateTime?
+  finishedAt            DateTime?
+  createdAt             DateTime      @default(now())
+
+  user        User          @relation(fields: [userId], references: [id])
+  suite       TestSuite?    @relation(fields: [suiteId], references: [id])
+  environment Environment?  @relation(fields: [environmentId], references: [id])
+  results     TestResult[]
+
+  @@map("test_runs")
+}
+
+model TestResult {
+  id               String           @id @default(cuid())
+  runId            String
+  testCaseId       String
+  llmConfigId      String?
+  status           TestResultStatus
+  reason           String? // human-readable failure reason
+  errorDetail      String? // technical error message
+  failedStepIndex  Int? // which step failed (0-indexed)
+  failedStepAction String? // action name of failed step
+  screenshots      Json             @default("[]") // string[] — file paths
+  videoUrl         String?
+  logs             Json             @default("[]") // StepLog[]
+  promptTokens     Int              @default(0)
+  completionTokens Int              @default(0)
+  totalTokens      Int              @default(0)
+  estimatedCost    Float            @default(0)
+  duration         Int              @default(0) // ms
+  createdAt        DateTime         @default(now())
+
+  run       TestRun    @relation(fields: [runId], references: [id])
+  testCase  TestCase   @relation(fields: [testCaseId], references: [id])
+  llmConfig LLMConfig? @relation(fields: [llmConfigId], references: [id])
+
+  @@map("test_results")
+}
+
+model Schedule {
+  id        String    @id @default(cuid())
+  suiteId   String
+  cronExpr  String // e.g. "0 2 * * *"
+  timezone  String    @default("UTC")
+  enabled   Boolean   @default(true)
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  suite TestSuite @relation(fields: [suiteId], references: [id])
+
+  @@map("schedules")
+}
+
+model NotificationConfig {
+  id        String              @id @default(cuid())
+  userId    String
+  type      String // "email" | "webhook"
+  target    String // email address or webhook URL
+  events    NotificationEvent[]
+  enabled   Boolean             @default(true)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notification_configs")
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  userId     String
+  action     AuditAction
+  resource   String // e.g. "TestSuite", "TestRun"
+  resourceId String
+  metadata   Json        @default("{}")
+  createdAt  DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
