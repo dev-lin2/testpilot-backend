@@ -8,10 +8,7 @@ import { SuiteTestCasesController } from './suite-test-cases.controller';
 import { AiModule } from '../ai/ai.module';
 
 @Module({
-  imports: [
-    BullModule.registerQueue({ name: TEST_RUNS_QUEUE }),
-    AiModule,
-  ],
+  imports: [BullModule.registerQueue({ name: TEST_RUNS_QUEUE }), AiModule],
   providers: [TestCasesService],
   controllers: [TestCasesController, SuiteTestCasesController],
   exports: [TestCasesService],

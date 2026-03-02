@@ -1,6 +1,10 @@
 // src/ai/ai.service.ts
 
-import { Injectable, ForbiddenException, BadGatewayException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  BadGatewayException,
+} from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { LlmConfigsService } from '../llm-configs/llm-configs.service';
@@ -9,7 +13,11 @@ import type { LlmMessages, LlmCallResult } from './ai.types';
 
 interface OpenAIResponse {
   choices: { message: { content: string } }[];
-  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 interface AnthropicResponse {
@@ -19,7 +27,11 @@ interface AnthropicResponse {
 
 interface GeminiResponse {
   candidates: { content: { parts: { text: string }[] } }[];
-  usageMetadata: { promptTokenCount: number; candidatesTokenCount: number; totalTokenCount: number };
+  usageMetadata: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
 }
 
 interface OllamaResponse {
@@ -35,11 +47,21 @@ export class AiService {
     private llmConfigsService: LlmConfigsService,
   ) {}
 
-  async call(userId: string, configId: string, messages: LlmMessages): Promise<LlmCallResult> {
+  async call(
+    userId: string,
+    configId: string,
+    messages: LlmMessages,
+  ): Promise<LlmCallResult> {
     const config = await this.llmConfigsService.findOne(userId, configId);
-    const apiKey = await this.llmConfigsService.getDecryptedApiKey(userId, configId);
+    const apiKey = await this.llmConfigsService.getDecryptedApiKey(
+      userId,
+      configId,
+    );
 
-    if (config.tokenBudget !== null && config.totalTokens >= config.tokenBudget) {
+    if (
+      config.tokenBudget !== null &&
+      config.totalTokens >= config.tokenBudget
+    ) {
       throw new ForbiddenException('Token budget exceeded for this LLM config');
     }
 
@@ -48,23 +70,53 @@ export class AiService {
     try {
       switch (config.provider) {
         case LLMProvider.OPENAI:
-          result = await this.callOpenAI(config.model, apiKey, messages, config.temperature, config.maxTokens, null);
+          result = await this.callOpenAI(
+            config.model,
+            apiKey,
+            messages,
+            config.temperature,
+            config.maxTokens,
+            null,
+          );
           break;
         case LLMProvider.ANTHROPIC:
-          result = await this.callAnthropic(config.model, apiKey, messages, config.maxTokens);
+          result = await this.callAnthropic(
+            config.model,
+            apiKey,
+            messages,
+            config.maxTokens,
+          );
           break;
         case LLMProvider.GEMINI:
-          result = await this.callGemini(config.model, apiKey, messages, config.temperature, config.maxTokens);
+          result = await this.callGemini(
+            config.model,
+            apiKey,
+            messages,
+            config.temperature,
+            config.maxTokens,
+          );
           break;
         case LLMProvider.OLLAMA:
-          result = await this.callOllama(config.model, config.baseUrl ?? 'http://localhost:11434', messages);
+          result = await this.callOllama(
+            config.model,
+            config.baseUrl ?? 'http://localhost:11434',
+            messages,
+          );
           break;
         case LLMProvider.CUSTOM:
-          result = await this.callOpenAI(config.model, apiKey, messages, config.temperature, config.maxTokens, config.baseUrl);
+          result = await this.callOpenAI(
+            config.model,
+            apiKey,
+            messages,
+            config.temperature,
+            config.maxTokens,
+            config.baseUrl,
+          );
           break;
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'LLM API call failed';
+      const message =
+        err instanceof Error ? err.message : 'LLM API call failed';
       throw new BadGatewayException(`LLM provider error: ${message}`);
     }
 
@@ -161,7 +213,10 @@ export class AiService {
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         contents: [
-          { role: 'user', parts: [{ text: `${messages.system}\n\n${messages.user}` }] },
+          {
+            role: 'user',
+            parts: [{ text: `${messages.system}\n\n${messages.user}` }],
+          },
         ],
         generationConfig: { temperature, maxOutputTokens: maxTokens },
       },

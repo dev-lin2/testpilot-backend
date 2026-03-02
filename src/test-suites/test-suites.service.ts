@@ -34,11 +34,16 @@ export class TestSuitesService {
     @InjectQueue(TEST_RUNS_QUEUE) private testRunsQueue: BullQueue,
   ) {}
 
-  async findAll(userId: string, query: ListSuitesQueryDto): Promise<SuiteListResult> {
+  async findAll(
+    userId: string,
+    query: ListSuitesQueryDto,
+  ): Promise<SuiteListResult> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
-    const tagList = query.tags ? query.tags.split(',').map((t) => t.trim()) : undefined;
+    const tagList = query.tags
+      ? query.tags.split(',').map((t) => t.trim())
+      : undefined;
 
     const where = {
       userId,
@@ -47,7 +52,12 @@ export class TestSuitesService {
       ...(query.search && {
         OR: [
           { name: { contains: query.search, mode: 'insensitive' as const } },
-          { description: { contains: query.search, mode: 'insensitive' as const } },
+          {
+            description: {
+              contains: query.search,
+              mode: 'insensitive' as const,
+            },
+          },
         ],
       }),
     };
@@ -131,7 +141,10 @@ export class TestSuitesService {
     };
   }
 
-  async create(userId: string, dto: CreateTestSuiteDto): Promise<TestSuiteListItem> {
+  async create(
+    userId: string,
+    dto: CreateTestSuiteDto,
+  ): Promise<TestSuiteListItem> {
     if (dto.dependsOnId) {
       await this.findOwnedOrThrow(userId, dto.dependsOnId);
     }
@@ -150,7 +163,11 @@ export class TestSuitesService {
     return this.toListItem(suite, 0, null, null);
   }
 
-  async update(userId: string, id: string, dto: UpdateTestSuiteDto): Promise<TestSuiteListItem> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateTestSuiteDto,
+  ): Promise<TestSuiteListItem> {
     await this.findOwnedOrThrow(userId, id);
 
     if (dto.dependsOnId) {
@@ -180,7 +197,12 @@ export class TestSuitesService {
       select: { status: true, createdAt: true },
     });
 
-    return this.toListItem(suite, caseCount, lastRun?.status ?? null, lastRun?.createdAt ?? null);
+    return this.toListItem(
+      suite,
+      caseCount,
+      lastRun?.status ?? null,
+      lastRun?.createdAt ?? null,
+    );
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -191,7 +213,11 @@ export class TestSuitesService {
     });
   }
 
-  async run(userId: string, suiteId: string, dto: RunSuiteDto): Promise<RunQueuedResponse> {
+  async run(
+    userId: string,
+    suiteId: string,
+    dto: RunSuiteDto,
+  ): Promise<RunQueuedResponse> {
     await this.findOwnedOrThrow(userId, suiteId);
 
     const totalCases = await this.prisma.testCase.count({
@@ -217,7 +243,9 @@ export class TestSuitesService {
   async duplicate(userId: string, id: string): Promise<TestSuiteListItem> {
     const suite = await this.prisma.testSuite.findFirst({
       where: { id, deletedAt: null },
-      include: { testCases: { where: { deletedAt: null }, orderBy: { order: 'asc' } } },
+      include: {
+        testCases: { where: { deletedAt: null }, orderBy: { order: 'asc' } },
+      },
     });
 
     if (!suite) throw new NotFoundException('Test suite not found');
@@ -254,7 +282,10 @@ export class TestSuitesService {
     return this.toListItem(newSuite, suite.testCases.length, null, null);
   }
 
-  private async findOwnedOrThrow(userId: string, id: string): Promise<TestSuite> {
+  private async findOwnedOrThrow(
+    userId: string,
+    id: string,
+  ): Promise<TestSuite> {
     const suite = await this.prisma.testSuite.findFirst({
       where: { id, deletedAt: null },
     });

@@ -35,8 +35,15 @@ export class TestSuitesController {
   async findAll(
     @CurrentUser() user: JwtPayload,
     @Query() query: ListSuitesQueryDto,
-  ): Promise<{ success: boolean; data: TestSuiteListItem[]; meta: PaginationMeta }> {
-    const result: SuiteListResult = await this.testSuitesService.findAll(user.sub, query);
+  ): Promise<{
+    success: boolean;
+    data: TestSuiteListItem[];
+    meta: PaginationMeta;
+  }> {
+    const result: SuiteListResult = await this.testSuitesService.findAll(
+      user.sub,
+      query,
+    );
     return { success: true, ...result };
   }
 

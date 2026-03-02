@@ -29,4 +29,4 @@ async function bootstrap(): Promise<void> {
   console.log(`TestPilot backend running on port ${port}`);
 }
 
-bootstrap();
+void bootstrap();

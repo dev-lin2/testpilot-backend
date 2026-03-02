@@ -9,10 +9,7 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
-  imports: [
-    PassportModule,
-    JwtModule.register({}),
-  ],
+  imports: [PassportModule, JwtModule.register({})],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],
 })

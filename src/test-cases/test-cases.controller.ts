@@ -1,8 +1,15 @@
 // src/test-cases/test-cases.controller.ts
 
 import {
-  Controller, Get, Post, Patch, Delete,
-  Body, Param, Query, HttpCode, HttpStatus,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { TestCasesService } from './test-cases.service';
 import { CreateTestCaseDto } from './dto/create-test-case.dto';
@@ -120,7 +127,11 @@ export class TestCasesController {
     @Param('id') id: string,
     @Body() dto: ValidateSelectorsDto,
   ): Promise<{ success: boolean; data: ValidateSelectorsResult }> {
-    const data = await this.testCasesService.validateSelectors(user.sub, id, dto);
+    const data = await this.testCasesService.validateSelectors(
+      user.sub,
+      id,
+      dto,
+    );
     return { success: true, data };
   }
 }

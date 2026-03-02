@@ -30,7 +30,9 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  async register(@Body() dto: RegisterDto): Promise<{ success: boolean; data: AuthResult }> {
+  async register(
+    @Body() dto: RegisterDto,
+  ): Promise<{ success: boolean; data: AuthResult }> {
     const result = await this.authService.register(dto);
     return { success: true, data: result };
   }

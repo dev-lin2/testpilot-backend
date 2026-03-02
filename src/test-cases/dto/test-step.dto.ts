@@ -1,16 +1,40 @@
 // src/test-cases/dto/test-step.dto.ts
 
-import { IsString, IsOptional, IsIn, IsNumber, IsArray, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsIn,
+  IsNumber,
+  IsArray,
+  Min,
+} from 'class-validator';
 
 const STEP_ACTIONS = [
-  'goto', 'click', 'fill', 'select', 'wait', 'wait_for_selector',
-  'expect', 'screenshot', 'hover', 'press_key', 'scroll',
+  'goto',
+  'click',
+  'fill',
+  'select',
+  'wait',
+  'wait_for_selector',
+  'expect',
+  'screenshot',
+  'hover',
+  'press_key',
+  'scroll',
 ] as const;
 
 const ASSERTION_TYPES = [
-  'visible', 'hidden', 'contains_text', 'equals_text',
-  'url_contains', 'url_equals', 'count',
-  'attribute_equals', 'checked', 'enabled', 'disabled',
+  'visible',
+  'hidden',
+  'contains_text',
+  'equals_text',
+  'url_contains',
+  'url_equals',
+  'count',
+  'attribute_equals',
+  'checked',
+  'enabled',
+  'disabled',
 ] as const;
 
 export class TestStepDto {

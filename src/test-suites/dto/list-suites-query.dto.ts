@@ -1,6 +1,13 @@
 // src/test-suites/dto/list-suites-query.dto.ts
 
-import { IsOptional, IsInt, IsString, IsBoolean, Min, Max } from 'class-validator';
+import {
+  IsOptional,
+  IsInt,
+  IsString,
+  IsBoolean,
+  Min,
+  Max,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
 export class ListSuitesQueryDto {
@@ -26,7 +33,9 @@ export class ListSuitesQueryDto {
   search?: string;
 
   @IsOptional()
-  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @Transform(
+    ({ value }: { value: unknown }) => value === 'true' || value === true,
+  )
   @IsBoolean()
   archived?: boolean = false;
 }

@@ -11,8 +11,14 @@ import { map } from 'rxjs/operators';
 import { ApiResponse } from '../types/response.type';
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
-  intercept(_context: ExecutionContext, next: CallHandler<T>): Observable<ApiResponse<T>> {
+export class ResponseInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
+  intercept(
+    _context: ExecutionContext,
+    next: CallHandler<T>,
+  ): Observable<ApiResponse<T>> {
     return next.handle().pipe(
       map((data) => {
         // If the handler already returns the standard shape, pass through

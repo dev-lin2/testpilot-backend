@@ -1,6 +1,10 @@
 // src/environments/environments.service.ts
 
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Environment } from '@prisma/client';
 import type { CreateEnvironmentDto } from './dto/create-environment.dto';
@@ -16,7 +20,7 @@ export class EnvironmentsService {
       where: { userId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
     });
-    return envs.map(this.toResponse);
+    return envs.map((e) => this.toResponse(e));
   }
 
   async findOne(userId: string, id: string): Promise<EnvironmentResponse> {
@@ -24,7 +28,10 @@ export class EnvironmentsService {
     return this.toResponse(env);
   }
 
-  async create(userId: string, dto: CreateEnvironmentDto): Promise<EnvironmentResponse> {
+  async create(
+    userId: string,
+    dto: CreateEnvironmentDto,
+  ): Promise<EnvironmentResponse> {
     const env = await this.prisma.environment.create({
       data: {
         userId,
@@ -36,7 +43,11 @@ export class EnvironmentsService {
     return this.toResponse(env);
   }
 
-  async update(userId: string, id: string, dto: UpdateEnvironmentDto): Promise<EnvironmentResponse> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateEnvironmentDto,
+  ): Promise<EnvironmentResponse> {
     await this.findOwnedOrThrow(userId, id);
 
     const env = await this.prisma.environment.update({
@@ -58,7 +69,10 @@ export class EnvironmentsService {
     });
   }
 
-  private async findOwnedOrThrow(userId: string, id: string): Promise<Environment> {
+  private async findOwnedOrThrow(
+    userId: string,
+    id: string,
+  ): Promise<Environment> {
     const env = await this.prisma.environment.findFirst({
       where: { id, deletedAt: null },
     });

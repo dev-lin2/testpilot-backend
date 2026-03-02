@@ -47,7 +47,11 @@ export class UsersController {
     @Body() dto: ChangePasswordDto,
   ): Promise<{ success: boolean; data: null; message: string }> {
     await this.usersService.changePassword(user.sub, dto);
-    return { success: true, data: null, message: 'Password changed successfully' };
+    return {
+      success: true,
+      data: null,
+      message: 'Password changed successfully',
+    };
   }
 
   @Get('api-keys')

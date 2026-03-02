@@ -27,10 +27,18 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt };
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+    };
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<UserProfile> {
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<UserProfile> {
     const user = await this.prisma.user.findFirst({
       where: { id: userId, deletedAt: null },
     });
@@ -44,7 +52,12 @@ export class UsersService {
       data: { ...(dto.name !== undefined && { name: dto.name }) },
     });
 
-    return { id: updated.id, name: updated.name, email: updated.email, createdAt: updated.createdAt };
+    return {
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      createdAt: updated.createdAt,
+    };
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
@@ -83,7 +96,10 @@ export class UsersService {
     }));
   }
 
-  async createApiKey(userId: string, dto: CreateApiKeyDto): Promise<ApiKeyCreated> {
+  async createApiKey(
+    userId: string,
+    dto: CreateApiKeyDto,
+  ): Promise<ApiKeyCreated> {
     const rawKey = `tp_${crypto.randomBytes(24).toString('hex')}`;
 
     const apiKey = await this.prisma.apiKey.create({

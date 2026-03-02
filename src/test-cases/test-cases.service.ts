@@ -45,10 +45,16 @@ export class TestCasesService {
     @InjectQueue(TEST_RUNS_QUEUE) private testRunsQueue: BullQueue,
   ) {}
 
-  async listBySuite(userId: string, suiteId: string, query: ListCasesQueryDto): Promise<TestCaseResponse[]> {
+  async listBySuite(
+    userId: string,
+    suiteId: string,
+    query: ListCasesQueryDto,
+  ): Promise<TestCaseResponse[]> {
     await this.verifySuiteOwnership(userId, suiteId);
 
-    const tagList = query.tags ? query.tags.split(',').map((t) => t.trim()) : undefined;
+    const tagList = query.tags
+      ? query.tags.split(',').map((t) => t.trim())
+      : undefined;
 
     const cases = await this.prisma.testCase.findMany({
       where: {
@@ -72,7 +78,9 @@ export class TestCasesService {
       },
     });
 
-    return cases.map((c) => this.toResponse(c, c.testResults[0]?.status ?? null));
+    return cases.map((c) =>
+      this.toResponse(c, c.testResults[0]?.status ?? null),
+    );
   }
 
   async findOne(userId: string, id: string): Promise<TestCaseResponse> {
@@ -85,7 +93,10 @@ export class TestCasesService {
     return this.toResponse(tc, lastResult?.status ?? null);
   }
 
-  async create(userId: string, dto: CreateTestCaseDto): Promise<TestCaseResponse> {
+  async create(
+    userId: string,
+    dto: CreateTestCaseDto,
+  ): Promise<TestCaseResponse> {
     await this.verifySuiteOwnership(userId, dto.suiteId);
 
     const maxOrder = await this.prisma.testCase.aggregate({
@@ -111,7 +122,11 @@ export class TestCasesService {
     return this.toResponse(tc, null);
   }
 
-  async update(userId: string, id: string, dto: UpdateTestCaseDto): Promise<TestCaseResponse> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateTestCaseDto,
+  ): Promise<TestCaseResponse> {
     await this.findOwnedOrThrow(userId, id);
 
     const tc = await this.prisma.testCase.update({
@@ -121,10 +136,18 @@ export class TestCasesService {
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.tags !== undefined && { tags: dto.tags }),
         ...(dto.llmConfigId !== undefined && { llmConfigId: dto.llmConfigId }),
-        ...(dto.captureScreenshots !== undefined && { captureScreenshots: dto.captureScreenshots }),
-        ...(dto.captureVideo !== undefined && { captureVideo: dto.captureVideo }),
-        ...(dto.variables !== undefined && { variables: dto.variables as Prisma.InputJsonValue }),
-        ...(dto.steps !== undefined && { steps: dto.steps as unknown as Prisma.InputJsonValue }),
+        ...(dto.captureScreenshots !== undefined && {
+          captureScreenshots: dto.captureScreenshots,
+        }),
+        ...(dto.captureVideo !== undefined && {
+          captureVideo: dto.captureVideo,
+        }),
+        ...(dto.variables !== undefined && {
+          variables: dto.variables as Prisma.InputJsonValue,
+        }),
+        ...(dto.steps !== undefined && {
+          steps: dto.steps as unknown as Prisma.InputJsonValue,
+        }),
       },
     });
 
@@ -145,7 +168,11 @@ export class TestCasesService {
     });
   }
 
-  async run(userId: string, id: string, dto: RunCaseDto): Promise<RunQueuedResponse> {
+  async run(
+    userId: string,
+    id: string,
+    dto: RunCaseDto,
+  ): Promise<RunQueuedResponse> {
     const tc = await this.findOwnedOrThrow(userId, id);
 
     const run = await this.prisma.testRun.create({
@@ -203,7 +230,10 @@ export class TestCasesService {
     );
   }
 
-  async generate(userId: string, dto: GenerateTestCaseDto): Promise<GenerateResult> {
+  async generate(
+    userId: string,
+    dto: GenerateTestCaseDto,
+  ): Promise<GenerateResult> {
     await this.verifySuiteOwnership(userId, dto.suiteId);
 
     const system = `You are a Playwright test automation expert. Generate a complete test case based on the user's description.
@@ -225,13 +255,21 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
 
     const user = `Generate test steps for: ${dto.description}\nBase URL: ${dto.baseUrl}`;
 
-    const result = await this.aiService.call(userId, dto.llmConfigId, { system, user });
+    const result = await this.aiService.call(userId, dto.llmConfigId, {
+      system,
+      user,
+    });
 
     let parsed: { name: string; steps: TestStep[] };
     try {
-      parsed = this.aiService.parseJsonResponse<{ name: string; steps: TestStep[] }>(result.content);
+      parsed = this.aiService.parseJsonResponse<{
+        name: string;
+        steps: TestStep[];
+      }>(result.content);
     } catch {
-      throw new InternalServerErrorException('Failed to parse AI response as JSON');
+      throw new InternalServerErrorException(
+        'Failed to parse AI response as JSON',
+      );
     }
 
     // Ensure each step has a valid id
@@ -251,7 +289,10 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
     };
   }
 
-  async suggestCoverage(userId: string, dto: SuggestCoverageDto): Promise<SuggestCoverageResult> {
+  async suggestCoverage(
+    userId: string,
+    dto: SuggestCoverageDto,
+  ): Promise<SuggestCoverageResult> {
     await this.verifySuiteOwnership(userId, dto.suiteId);
 
     const suite = await this.prisma.testSuite.findFirst({
@@ -282,13 +323,20 @@ Return ONLY valid JSON (no markdown):
 Existing tests:\n${existingTests || '(none yet)'}
 Suggest missing test coverage.`;
 
-    const result = await this.aiService.call(userId, dto.llmConfigId, { system, user });
+    const result = await this.aiService.call(userId, dto.llmConfigId, {
+      system,
+      user,
+    });
 
     let parsed: { suggestions: CoverageSuggestion[] };
     try {
-      parsed = this.aiService.parseJsonResponse<{ suggestions: CoverageSuggestion[] }>(result.content);
+      parsed = this.aiService.parseJsonResponse<{
+        suggestions: CoverageSuggestion[];
+      }>(result.content);
     } catch {
-      throw new InternalServerErrorException('Failed to parse AI response as JSON');
+      throw new InternalServerErrorException(
+        'Failed to parse AI response as JSON',
+      );
     }
 
     return {
@@ -354,9 +402,17 @@ Suggest missing test coverage.`;
         const selector = this.substituteVariables(step.selector, { baseUrl });
         try {
           const count = await page.locator(selector).count();
-          results.push({ stepId: step.id, selector: step.selector, found: count > 0 });
+          results.push({
+            stepId: step.id,
+            selector: step.selector,
+            found: count > 0,
+          });
         } catch {
-          results.push({ stepId: step.id, selector: step.selector, found: false });
+          results.push({
+            stepId: step.id,
+            selector: step.selector,
+            found: false,
+          });
         }
       }
     } finally {
@@ -366,25 +422,39 @@ Suggest missing test coverage.`;
     return { valid: results.every((r) => r.found), results };
   }
 
-  private substituteVariables(text: string, vars: Record<string, string>): string {
-    return text.replace(/\{\{(\w+)\}\}/g, (_, key: string) => vars[key] ?? `{{${key}}}`);
+  private substituteVariables(
+    text: string,
+    vars: Record<string, string>,
+  ): string {
+    return text.replace(
+      /\{\{(\w+)\}\}/g,
+      (_, key: string) => vars[key] ?? `{{${key}}}`,
+    );
   }
 
-  private async verifySuiteOwnership(userId: string, suiteId: string): Promise<void> {
+  private async verifySuiteOwnership(
+    userId: string,
+    suiteId: string,
+  ): Promise<void> {
     const suite = await this.prisma.testSuite.findFirst({
       where: { id: suiteId, userId, deletedAt: null },
     });
     if (!suite) throw new NotFoundException('Test suite not found');
   }
 
-  private async findOwnedOrThrow(userId: string, id: string): Promise<TestCase> {
+  private async findOwnedOrThrow(
+    userId: string,
+    id: string,
+  ): Promise<TestCase> {
     const tc = await this.prisma.testCase.findFirst({
       where: { id, deletedAt: null },
       include: { suite: { select: { userId: true } } },
     });
 
     if (!tc) throw new NotFoundException('Test case not found');
-    if ((tc as TestCase & { suite: { userId: string } }).suite.userId !== userId) {
+    if (
+      (tc as TestCase & { suite: { userId: string } }).suite.userId !== userId
+    ) {
       throw new ForbiddenException('Access denied');
     }
 

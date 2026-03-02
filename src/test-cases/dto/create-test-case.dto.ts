@@ -1,7 +1,12 @@
 // src/test-cases/dto/create-test-case.dto.ts
 
 import {
-  IsString, IsOptional, IsArray, IsBoolean, IsObject, ValidateNested,
+  IsString,
+  IsOptional,
+  IsArray,
+  IsBoolean,
+  IsObject,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TestStepDto } from './test-step.dto';

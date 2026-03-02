@@ -1,6 +1,10 @@
 // src/llm-configs/llm-configs.service.ts
 
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { encrypt, decrypt } from '../common/utils/encryption.util';
@@ -21,7 +25,7 @@ export class LlmConfigsService {
       where: { userId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
     });
-    return configs.map(this.toResponse);
+    return configs.map((c) => this.toResponse(c));
   }
 
   async findOne(userId: string, id: string): Promise<LlmConfigResponse> {
@@ -29,8 +33,12 @@ export class LlmConfigsService {
     return this.toResponse(config);
   }
 
-  async create(userId: string, dto: CreateLlmConfigDto): Promise<LlmConfigResponse> {
-    const encryptionKey = this.configService.getOrThrow<string>('ENCRYPTION_KEY');
+  async create(
+    userId: string,
+    dto: CreateLlmConfigDto,
+  ): Promise<LlmConfigResponse> {
+    const encryptionKey =
+      this.configService.getOrThrow<string>('ENCRYPTION_KEY');
     const apiKeyEnc = encrypt(dto.apiKey, encryptionKey);
 
     const config = await this.prisma.lLMConfig.create({
@@ -50,17 +58,24 @@ export class LlmConfigsService {
     return this.toResponse(config);
   }
 
-  async update(userId: string, id: string, dto: UpdateLlmConfigDto): Promise<LlmConfigResponse> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateLlmConfigDto,
+  ): Promise<LlmConfigResponse> {
     await this.findOwnedOrThrow(userId, id);
 
-    const encryptionKey = this.configService.getOrThrow<string>('ENCRYPTION_KEY');
+    const encryptionKey =
+      this.configService.getOrThrow<string>('ENCRYPTION_KEY');
 
     const config = await this.prisma.lLMConfig.update({
       where: { id },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.model !== undefined && { model: dto.model }),
-        ...(dto.apiKey !== undefined && { apiKeyEnc: encrypt(dto.apiKey, encryptionKey) }),
+        ...(dto.apiKey !== undefined && {
+          apiKeyEnc: encrypt(dto.apiKey, encryptionKey),
+        }),
         ...(dto.baseUrl !== undefined && { baseUrl: dto.baseUrl }),
         ...(dto.temperature !== undefined && { temperature: dto.temperature }),
         ...(dto.maxTokens !== undefined && { maxTokens: dto.maxTokens }),
@@ -84,11 +99,15 @@ export class LlmConfigsService {
    */
   async getDecryptedApiKey(userId: string, id: string): Promise<string> {
     const config = await this.findOwnedOrThrow(userId, id);
-    const encryptionKey = this.configService.getOrThrow<string>('ENCRYPTION_KEY');
+    const encryptionKey =
+      this.configService.getOrThrow<string>('ENCRYPTION_KEY');
     return decrypt(config.apiKeyEnc, encryptionKey);
   }
 
-  private async findOwnedOrThrow(userId: string, id: string): Promise<LLMConfig> {
+  private async findOwnedOrThrow(
+    userId: string,
+    id: string,
+  ): Promise<LLMConfig> {
     const config = await this.prisma.lLMConfig.findFirst({
       where: { id, deletedAt: null },
     });

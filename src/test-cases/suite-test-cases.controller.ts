@@ -18,7 +18,11 @@ export class SuiteTestCasesController {
     @Param('suiteId') suiteId: string,
     @Query() query: ListCasesQueryDto,
   ): Promise<{ success: boolean; data: TestCaseResponse[] }> {
-    const data = await this.testCasesService.listBySuite(user.sub, suiteId, query);
+    const data = await this.testCasesService.listBySuite(
+      user.sub,
+      suiteId,
+      query,
+    );
     return { success: true, data };
   }
 }

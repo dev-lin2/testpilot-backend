@@ -22,7 +22,10 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<Omit<User, 'password'> | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<Omit<User, 'password'> | null> {
     const user = await this.prisma.user.findFirst({
       where: { email, deletedAt: null },
     });
@@ -32,12 +35,15 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return null;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _pw, ...result } = user;
     return result;
   }
 
   async register(dto: RegisterDto): Promise<AuthResult> {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existing) {
       throw new ConflictException('Email already registered');
     }
@@ -51,7 +57,12 @@ export class AuthService {
     await this.saveRefreshToken(user.id, tokens.refreshToken);
 
     return {
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
       ...tokens,
     };
   }
@@ -61,7 +72,12 @@ export class AuthService {
     await this.saveRefreshToken(user.id, tokens.refreshToken);
 
     return {
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
       ...tokens,
     };
   }
@@ -76,7 +92,11 @@ export class AuthService {
   async refresh(token: string): Promise<TokenPair> {
     let payload: { sub: string; email: string; role: UserRole };
     try {
-      payload = this.jwtService.verify<{ sub: string; email: string; role: UserRole }>(token, {
+      payload = this.jwtService.verify<{
+        sub: string;
+        email: string;
+        role: UserRole;
+      }>(token, {
         secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
@@ -120,13 +140,21 @@ export class AuthService {
     };
   }
 
-  private async generateTokens(userId: string, email: string, role: UserRole): Promise<TokenPair> {
+  private async generateTokens(
+    userId: string,
+    email: string,
+    role: UserRole,
+  ): Promise<TokenPair> {
     const payload = { sub: userId, email, role };
 
     const accessSecret = this.configService.getOrThrow<string>('JWT_SECRET');
-    const refreshSecret = this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
-    const accessExpiry = this.configService.getOrThrow<string>('JWT_EXPIRES_IN');
-    const refreshExpiry = this.configService.getOrThrow<string>('JWT_REFRESH_EXPIRES_IN');
+    const refreshSecret =
+      this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+    const accessExpiry =
+      this.configService.getOrThrow<string>('JWT_EXPIRES_IN');
+    const refreshExpiry = this.configService.getOrThrow<string>(
+      'JWT_REFRESH_EXPIRES_IN',
+    );
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
