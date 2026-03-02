@@ -59,6 +59,16 @@ export class TestRunsProcessor {
       data: { status: TestRunStatus.RUNNING, startedAt: new Date() },
     });
 
+    this.eventEmitter.emit('test-run.started', {
+      runId,
+      userId: run.userId,
+      status: 'RUNNING',
+      suiteName: run.suite?.name ?? null,
+      totalCases: 0,
+      passedCases: 0,
+      failedCases: 0,
+    });
+
     const testCases = run.suite?.testCases ?? [];
 
     // If single test case run (testCaseId is set), filter to just that case
@@ -251,6 +261,16 @@ export class TestRunsProcessor {
       status: finalStatus,
       totalTokens: totalTokensUsed,
       estimatedCost: totalEstimatedCost,
+    });
+
+    this.eventEmitter.emit('test-run.completed', {
+      runId,
+      userId: run.userId,
+      status: finalStatus,
+      suiteName: run.suite?.name ?? null,
+      totalCases: filteredCases.length,
+      passedCases: passedCount,
+      failedCases: failedCount,
     });
 
     this.logger.log(

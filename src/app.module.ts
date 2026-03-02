@@ -13,6 +13,7 @@ import { TestSuitesModule } from './test-suites/test-suites.module';
 import { TestCasesModule } from './test-cases/test-cases.module';
 import { TestRunsModule } from './test-runs/test-runs.module';
 import { TestResultsModule } from './test-results/test-results.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { TestResultsModule } from './test-results/test-results.module';
     TestCasesModule,
     TestRunsModule,
     TestResultsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
