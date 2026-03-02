@@ -3,6 +3,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bull';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -14,6 +15,7 @@ import { TestCasesModule } from './test-cases/test-cases.module';
 import { TestRunsModule } from './test-runs/test-runs.module';
 import { TestResultsModule } from './test-results/test-results.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ import { NotificationsModule } from './notifications/notifications.module';
       envFilePath: '.env',
     }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -41,6 +44,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     TestRunsModule,
     TestResultsModule,
     NotificationsModule,
+    SchedulerModule,
   ],
 })
 export class AppModule {}
